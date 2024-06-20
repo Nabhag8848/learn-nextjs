@@ -7,6 +7,7 @@ import {
   getBookings,
   updateGuest as update,
   updateBooking,
+  createBooking as create,
 } from "./data-service";
 import { redirect } from "next/navigation";
 
@@ -82,4 +83,27 @@ export async function updateReservation(formData) {
   revalidatePath(`/account/reservations/edit/${id}`);
   revalidatePath(`/account/reservations`);
   redirect("/account/reservations");
+}
+
+export async function createBooking(bookingData, formData) {
+  const session = await auth();
+  if (!session) {
+    throw new Error("You must be logged in");
+  }
+
+  const newBooking = {
+    ...bookingData,
+    guest_id: session.user.guestId,
+    num_guests: Number(formData.get("num_guests")),
+    observations: formData.get("observations"),
+    extra_price: 0,
+    total_price: bookingData.cabin_price,
+    is_paid: false,
+    has_breakfast: false,
+    status: "unconfirmed",
+  };
+
+  await create(newBooking);
+  revalidatePath(`/cabins/${bookingData.cabin_id}`);
+  redirect("/cabins/thankyou")
 }

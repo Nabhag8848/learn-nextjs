@@ -1,12 +1,26 @@
 "use client";
 
+import { differenceInDays } from "date-fns";
 import { useReservation } from "./ReservationContext";
+import { createBooking } from "@/app/_lib/actions";
 
 function ReservationForm({ cabin, user }) {
   // CHANGE
-  const { max_capacity } = cabin;
-  const { range } = useReservation();
+  const { max_capacity, regular_price, discount, id } = cabin;
+  const { range, setRange } = useReservation();
+  const start_date = range.from;
+  const end_date = range.to;
+  const num_nights = differenceInDays(end_date, start_date);
+  const cabin_price = num_nights * (regular_price - discount);
+  const bookingData = {
+    start_date,
+    end_date,
+    num_nights,
+    cabin_price,
+    cabin_id: id,
+  };
 
+  const createBookingwithData = createBooking.bind(null, bookingData);
   return (
     <div className="scale-[1.01]">
       <div className="bg-primary-800 text-primary-300 px-16 py-2 flex justify-between items-center">
@@ -24,12 +38,18 @@ function ReservationForm({ cabin, user }) {
         </div>
       </div>
 
-      <form className="bg-primary-900 py-10 px-16 text-lg flex gap-5 flex-col">
+      <form
+        className="bg-primary-900 py-10 px-16 text-lg flex gap-5 flex-col"
+        action={async (formData) => {
+          await createBookingwithData(formData);
+          setRange({ from: undefined, to: undefined });
+        }}
+      >
         <div className="space-y-2">
-          <label htmlFor="numGuests">How many guests?</label>
+          <label htmlFor="num_guests">How many guests?</label>
           <select
-            name="numGuests"
-            id="numGuests"
+            name="num_guests"
+            id="num_guests"
             className="px-5 py-3 bg-primary-200 text-primary-800 w-full shadow-sm rounded-sm"
             required
           >
